@@ -30,14 +30,18 @@ uploaded_file = st.file_uploader("📁 Upload a DNA FASTA file", type=["fasta", 
 def analyze_sequence(seq_record):
     seq = seq_record.seq
     gc = gc_fraction(seq) * 100
-    protein = seq.translate(to_stop=True)
+
+    # ✅ Trim to avoid Biopython warning on partial codons
+    trimmed_seq = seq[:len(seq) - (len(seq) % 3)]
+    protein = trimmed_seq.translate(to_stop=True)
+
     base_counts = pd.Series(list(seq)).value_counts().sort_index()
     base_df = base_counts.rename_axis("Base").reset_index(name="Count")
     return gc, protein, base_df
 
-# ✔️ THIS PART FIXES THE ERROR
-if uploaded_file is not None:
-    stringio = io.StringIO(uploaded_file.getvalue().decode("utf-8"))
+# If file is uploaded
+if uploaded_file:
+    stringio = io.StringIO(uploaded_file.getvalue().decode("utf-8"))  # ✅ Fix: Text mode
     records = list(SeqIO.parse(stringio, "fasta"))
 
     if not records:
