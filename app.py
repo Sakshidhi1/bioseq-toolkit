@@ -31,19 +31,16 @@ def analyze_sequence(seq_record):
     seq = seq_record.seq
     gc = gc_fraction(seq) * 100
 
-    # ✅ Trim to length divisible by 3 for translation
-    codon_len = len(seq) - (len(seq) % 3)
-    trimmed_seq = seq[:codon_len]
-
-    # Translate to protein (first ORF)
+    # Trim the sequence if it's not a multiple of 3
+    trimmed_length = len(seq) - (len(seq) % 3)
+    trimmed_seq = seq[:trimmed_length]
     protein = trimmed_seq.translate(to_stop=True)
 
-    # Base composition
     base_counts = pd.Series(list(seq)).value_counts().sort_index()
     base_df = base_counts.rename_axis("Base").reset_index(name="Count")
+    return gc, protein, base_df
 
-    return gc, protein, base_df, codon_len != len(seq)  # indicate if trimming was done
-
+# If file is uploaded
 if uploaded_file:
     stringio = io.StringIO(uploaded_file.getvalue().decode("utf-8"))
     records = list(SeqIO.parse(stringio, "fasta"))
@@ -57,10 +54,7 @@ if uploaded_file:
             st.subheader(f"🧬 Sequence ID: {record.id}")
             st.code(str(record.seq), language="text")
 
-            gc_content, protein, base_df, was_trimmed = analyze_sequence(record)
-
-            if was_trimmed:
-                st.warning("⚠️ Sequence length not a multiple of 3. Trimmed extra bases for accurate translation.")
+            gc_content, protein, base_df = analyze_sequence(record)
 
             if show_gc:
                 st.write(f"**GC Content:** `{gc_content:.2f}%`")
