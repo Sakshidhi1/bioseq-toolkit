@@ -35,8 +35,8 @@ def analyze_sequence(seq_record):
     base_df = base_counts.rename_axis("Base").reset_index(name="Count")
     return gc, protein, base_df
 
-# If file is uploaded
-if uploaded_file:
+# ✔️ THIS PART FIXES THE ERROR
+if uploaded_file is not None:
     stringio = io.StringIO(uploaded_file.getvalue().decode("utf-8"))
     records = list(SeqIO.parse(stringio, "fasta"))
 
