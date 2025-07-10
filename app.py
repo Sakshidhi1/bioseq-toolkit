@@ -31,8 +31,11 @@ def analyze_sequence(seq_record):
     seq = seq_record.seq
     gc = gc_fraction(seq) * 100
 
-    # ✅ Trim to avoid Biopython warning on partial codons
-    trimmed_seq = seq[:len(seq) - (len(seq) % 3)]
+    # Fix partial codon warning
+    trimmed_seq = seq[:len(seq) - len(seq) % 3]
+    if len(seq) % 3 != 0:
+        st.warning("⚠️ Sequence length not a multiple of 3. Trimmed extra bases for accurate translation.")
+
     protein = trimmed_seq.translate(to_stop=True)
 
     base_counts = pd.Series(list(seq)).value_counts().sort_index()
@@ -41,7 +44,8 @@ def analyze_sequence(seq_record):
 
 # If file is uploaded
 if uploaded_file:
-    stringio = io.StringIO(uploaded_file.getvalue().decode("utf-8"))  # ✅ Fix: Text mode
+    # Fix StreamModeError: use StringIO to open file in text mode
+    stringio = io.StringIO(uploaded_file.getvalue().decode("utf-8"))
     records = list(SeqIO.parse(stringio, "fasta"))
 
     if not records:
